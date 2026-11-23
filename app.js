@@ -1,42 +1,51 @@
+const API_BASE_URL = "http://54.91.131.2:3000";
+
 const productList = document.querySelector("#products");
 const addProductForm = document.querySelector("#add-product-form");
 const updateProductForm = document.querySelector("#update-product-form");
 const updateProductId = document.querySelector("#update-id");
 const updateProductName = document.querySelector("#update-name");
 const updateProductPrice = document.querySelector("#update-price");
+const updateProductDescription = document.querySelector("#update-description");
 
-// Function to fetch all products from the server
 async function fetchProducts() {
-  const response = await fetch("http://localhost:32.200.252.19/products");
-  // no localhost trocar a porta pelo IP Público pelo IP da VM EC2
-  // no exercício utilizaremos VM EC2 tanto para Back quanto Front, obviamente o Front acessando o IP da VM do Backend
-  // no exercício criar um Repo para Back e um para Front
-  const products = await response.json();
+  const response = await fetch(`${API_BASE_URL}/products`);
+  if (!response.ok) {
+    throw new Error(`Erro ao buscar produtos: ${response.status}`);
+  }
 
-  // Clear product list
+  const products = await response.json();
   productList.innerHTML = "";
 
-  // Add each product to the list
+  if (!Array.isArray(products)) {
+    return;
+  }
+
   products.forEach((product) => {
     const li = document.createElement("li");
-    li.innerHTML = `${product.name} - $${product.price}`;
 
-    // Add delete button for each product
+    const infoSpan = document.createElement("span");
+    const descText = product.description ? ` - ${product.description}` : "";
+    infoSpan.textContent = `${product.name} - $${product.price}${descText}`;
+    li.appendChild(infoSpan);
+
     const deleteButton = document.createElement("button");
-    deleteButton.innerHTML = "Delete";
+    deleteButton.type = "button";
+    deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", async () => {
       await deleteProduct(product.id);
       await fetchProducts();
     });
     li.appendChild(deleteButton);
 
-    // Add update button for each product
     const updateButton = document.createElement("button");
-    updateButton.innerHTML = "Update";
+    updateButton.type = "button";
+    updateButton.textContent = "Update";
     updateButton.addEventListener("click", () => {
       updateProductId.value = product.id;
-      updateProductName.value = product.name;
-      updateProductPrice.value = product.price;
+      updateProductName.value = product.name ?? "";
+      updateProductPrice.value = product.price ?? "";
+      updateProductDescription.value = product.description ?? "";
     });
     li.appendChild(updateButton);
 
@@ -44,45 +53,74 @@ async function fetchProducts() {
   });
 }
 
-// Event listener for Add Product form submit button
 addProductForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const name = addProductForm.elements["name"].value;
-  const price = addProductForm.elements["price"].value;
-  await addProduct(name, price);
+  const name = addProductForm.elements["name"].value.trim();
+  const price = parseFloat(addProductForm.elements["price"].value);
+  const description = addProductForm.elements["description"].value.trim();
+
+  await addProduct({ name, price, description });
   addProductForm.reset();
   await fetchProducts();
 });
 
-// Function to add a new product
-async function addProduct(name, price) {
-  const response = await fetch("http://localhost:32.200.252.19/products", {
-    // no localhost trocar a porta pelo IP Público pelo IP da VM EC2
-    // no exercício utilizaremos VM EC2 tanto para Back quanto Front, obviamente o Front acessando o IP da VM do Backend
-    // no exercício criar um Repo para Back e um para Front
+updateProductForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const id = updateProductId.value;
+  if (!id) {
+    alert("Selecione um produto clicando em Update primeiro.");
+    return;
+  }
+
+  const name = updateProductName.value.trim();
+  const price = parseFloat(updateProductPrice.value);
+  const description = updateProductDescription.value.trim();
+
+  await updateProduct(id, { name, price, description });
+  updateProductForm.reset();
+  updateProductId.value = "";
+  await fetchProducts();
+});
+
+async function addProduct(payload) {
+  const response = await fetch(`${API_BASE_URL}/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name, price }),
+    body: JSON.stringify(payload),
   });
-  return response.json();
+
+  if (!response.ok) {
+    throw new Error(`Erro ao criar produto: ${response.status}`);
+  }
+  return response.text();
 }
 
-// Function to delete a new product
-async function deleteProduct(id) {
-  const response = await fetch("http://localhost:32.200.252.19/products/" + id, {
-    // no localhost trocar a porta pelo IP Público pelo IP da VM EC2
-    // no exercício utilizaremos VM EC2 tanto para Back quanto Front, obviamente o Front acessando o IP da VM do Backend
-    // no exercício criar um Repo para Back e um para Front
-    method: "DELETE",
+async function updateProduct(id, payload) {
+  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    //body: JSON.stringify({id})
+    body: JSON.stringify(payload),
   });
-  return response.json();
+
+  if (!response.ok) {
+    throw new Error(`Erro ao atualizar produto: ${response.status}`);
+  }
+  return response.text();
 }
 
-// Fetch all products on page load
-fetchProducts();
+async function deleteProduct(id) {
+  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro ao excluir produto: ${response.status}`);
+  }
+  return response.text();
+}
+
+window.addEventListener("DOMContentLoaded", fetchProducts);
