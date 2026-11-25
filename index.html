@@ -1,32 +1,124 @@
-<!-- AMERICO DISSE QUE SÓ O BOTÃO "update" NÃO FUNCIONA -->
-<!-- PARA REALIZAR O FRONT-END NA EC2 VM, PRECISA BAIXAR O APACHE NO DIA -->
-
 <!doctype html>
-<html>
+<html lang="pt-BR">
   <head>
-    <title>Product CRUD</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Vitrine & CRUD</title>
     <link rel="stylesheet" type="text/css" href="style.css" />
   </head>
   <body>
-    <h1>Product CRUD</h1>
+    <div class="container">
+      <header class="page-header">
+        <h1>Product Vitrine & CRUD</h1>
+        <div id="api-status" class="status-badge status-checking">
+          Conectando à API...
+        </div>
+      </header>
 
-    <form id="add-product-form">
-      <h2>Add Product</h2>
-      <label for="name">Name:</label>
-      <input type="text" id="name" name="name" required />
-      <label for="price">Price:</label>
-      <input type="number" id="price" name="price" required step="0.01" />
-      <label for="description">Description:</label>
-      <input type="text" id="description" name="description" required />
-      <button type="submit">Add</button>
-    </form>
+      <!-- Painel de Métricas Business -->
+      <section class="kpi-bar" aria-label="Resumo do Catálogo">
+        <div class="kpi-card">
+          <span class="kpi-label">Produtos Ativos</span>
+          <strong id="kpi-total-items">0</strong>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Valor do Catálogo</span>
+          <strong id="kpi-total-value">$ 0.00</strong>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Ticket Médio</span>
+          <strong id="kpi-avg-price">$ 0.00</strong>
+        </div>
+      </section>
 
-    <ul id="products"></ul>
+      <!-- Área de Formulários (Adicionar e Editar) -->
+      <div class="forms-wrapper">
+        <form id="add-product-form">
+          <h2>Add Product</h2>
+          <label for="name">Name:</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Ex: Wireless Mouse"
+            required
+          />
+          <label for="price">Price ($):</label>
+          <input
+            type="number"
+            id="price"
+            name="price"
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+            required
+          />
+          <label for="description">Description:</label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            placeholder="Especificações ou detalhes comerciais"
+            required
+          />
+          <button type="submit">Add Product</button>
+        </form>
+
+        <form id="update-product-form" class="hidden">
+          <h2>Update Product <span id="editing-badge"></span></h2>
+          <input type="hidden" id="update-id" name="id" />
+          <label for="update-name">Name:</label>
+          <input type="text" id="update-name" name="name" required />
+          <label for="update-price">Price ($):</label>
+          <input
+            type="number"
+            id="update-price"
+            name="price"
+            min="0"
+            step="0.01"
+            required
+          />
+          <label for="update-description">Description:</label>
+          <input
+            type="text"
+            id="update-description"
+            name="description"
+            required
+          />
+          <div class="form-actions">
+            <button type="submit">Save Changes</button>
+            <button type="button" id="cancel-update-btn" class="btn-secondary">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Barra de Pesquisa e Ordenação da Vitrine -->
+      <section class="vitrine-controls">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Buscar produto por nome ou descrição..."
+        />
+        <select id="sort-select" aria-label="Ordenar produtos">
+          <option value="default">Ordenação: Padrão</option>
+          <option value="price-asc">Menor Preço</option>
+          <option value="price-desc">Maior Preço</option>
+          <option value="name-asc">Nome (A - Z)</option>
+        </select>
+        <button type="button" id="refresh-btn" class="btn-secondary">
+          Atualizar Vitrine
+        </button>
+      </section>
+
+      <!-- Mensagem de feedback / Toast -->
+      <div id="feedback-banner" class="feedback-banner hidden"></div>
+
+      <!-- Vitrine de Produtos -->
+      <ul id="products"></ul>
+    </div>
 
     <script src="app.js"></script>
-    <script>
-      // Call fetchProducts() when the page loads
-      window.addEventListener("load", fetchProducts);
-    </script>
   </body>
 </html>
